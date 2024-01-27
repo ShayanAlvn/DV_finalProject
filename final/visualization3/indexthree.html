@@ -1,0 +1,59 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<canvas id="studyLocationChart"></canvas>
+<script>
+    fetch('data_viz3.json')
+        .then(response => response.json())
+        .then(data => {
+            const sectors = Array.from(new Set(data.map(item => item.sector)));
+            const groupedData = {};
+            data.forEach(item => {
+                if (!groupedData[item.isced11]) {
+                    groupedData[item.isced11] = {};
+                }
+                groupedData[item.isced11][item.sector] = item.OBS_VALUE;
+            });
+            const isced11Codes = Object.keys(groupedData);
+            const datasets = sectors.map(sector => ({
+                label: sector,
+                data: isced11Codes.map(code => groupedData[code][sector] || 0),
+                backgroundColor: getRandomColor(),
+            }));
+            const ctx = document.getElementById('studyLocationChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: isced11Codes,
+                    datasets: datasets,
+                },
+                options: {
+                    scales: {
+                        x: {
+                            stacked: true,
+                            title: {
+                                display: true,
+                                text: 'Study Categories (isced11)',
+                            },
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Students',
+                            },
+                        },
+                    },
+                },
+            });
+        })
+        .catch(error => console.error('Error fetching data:', error));
+
+    function getRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+</script>
