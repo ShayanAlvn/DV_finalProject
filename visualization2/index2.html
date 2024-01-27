@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* You can adjust the chart's max-width as needed */
+        #studentChart {
+            max-width: 100%;
+            width: 800px; /* Adjust width as desired */
+            height: 500px; /* Adjust height as desired */
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="studentChart"></canvas>
+    <script>
+        // Load the data from 'x.json'
+        fetch('educational_data.json')
+            .then(response => response.json())
+            .then(data => {
+                // Extract the years and study categories from the data
+                const years = data.map(item => item.TIME_PERIOD);
+                const bachelorData = data.map(item => item["ED5"]);
+                const masterData = data.map(item => item["ED6"]);
+                const phdData = data.map(item => item['ED8']);
+
+                const ctx = document.getElementById('studentChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: years,
+                        datasets: [
+                            {
+                                label: "Bachelor's",
+                                data: bachelorData,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 2,
+                                fill: false,
+                            },
+                            {
+                                label: "Master's",
+                                data: masterData,
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 2,
+                                fill: false,
+                            },
+                            {
+                                label: 'PhD',
+                                data: phdData,
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 2,
+                                fill: false,
+                            },
+                        ],
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                position: 'bottom',
+                                title: {
+                                    display: true,
+                                    text: 'Year',
+                                },
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Students',
+                                },
+                            },
+                        },
+                    },
+                });
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    </script>
+</body>
+</html>

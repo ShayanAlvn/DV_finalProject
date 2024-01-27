@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Heatmap</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Where Students Are From - Heatmap</h1>
+    <div id="heatmap-container"></div>
+
+    <script>
+        // Read the data from 'data_viz4.json'
+        fetch('data_viz4.json')
+            .then(response => response.json())
+            .then(data => {
+                const geoData = data.map(item => item.geo);
+                const obsData = data.map(item => item.OBS_VALUE);
+
+                // Create a trace for the heatmap with intensity
+                const trace = {
+                    type: 'heatmap',
+                    z: [obsData],
+                    x: geoData,
+                    y: ['Students'],
+                    colorscale: 'Viridis',
+                    colorbar: {
+                        title: 'Number of Students',
+                        titleside: 'right',
+                    },
+                };
+
+                const layout = {
+                    title: 'Number of Students by Location',
+                    xaxis: {
+                        title: 'Location',
+                    },
+                    yaxis: {
+                        title: '',
+                    },
+                };
+
+                const config = {
+                    responsive: true,
+                };
+
+                // Create the heatmap
+                Plotly.newPlot('heatmap-container', [trace], layout, config);
+            })
+            .catch(error => console.error('Error loading data:', error));
+    </script>
+</body>
+</html>

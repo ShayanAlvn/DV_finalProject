@@ -1,0 +1,12 @@
+/* Basic styling for the bar chart */
+.bar {
+    fill: steelblue;
+}
+
+.bar:hover {
+    fill: orange;
+}
+
+.axis-label {
+    font-size: 14px;
+}
