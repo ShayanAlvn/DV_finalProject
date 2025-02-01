@@ -1,129 +1,129 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Enrollment Analysis - D3.js</title>
-    <script src="https://d3js.org/d3.v6.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #c2eec7;
-            margin: 0;
-            padding: 0;
-        }
-        .chart-container {
-            width: 800px;
-            height: 600px;
-            margin: 10px auto;
-        }
-        .description {
-            text-align: center;
-            margin: 20px auto;
-            width: 80%;
-        }
-        .chart-number {
-            text-align: center;
-            font-size: 18px;
-            margin-top: 30px;
-        }
-        .chart-description {
-            text-align: left;
-            margin: 0px auto;
-            width: 80%;
-        }
-    </style>
-</head>
-<body>
+// D3.js Visualizations for Higher Education Analysis
 
-<div class="chart-number">
-    <h2>Chart 1</h2>
-</div>
-<div class="description">
-    <h1>Student Enrollment by Course and Gender</h1>
-    <p>Comparison of male and female students enrolled in different courses.</p>
-</div>
-<div class="chart-container" id="barChart"></div>
+// Load the data from JSON files
+Promise.all([
+    d3.json('student_study_data1.json'),
+    d3.json('student_enrollment_trends_latest_mean.json'),
+    d3.json('student_distribution_geo_mean.json'),
+    d3.json('distribution_by_education_level_mean.json'),
+    d3.json('average_gender_course.json')
+]).then(([studyData, enrollmentData, geoData, educationData, genderData]) => {
+    
+    // Bar Chart - Gender Distribution
+    drawBarChart(genderData);
+    
+    // Line Chart - Enrollment Trends
+    drawLineChart(enrollmentData);
+    
+    // Stacked Bar Chart - Field of Study by Institution Type
+    drawStackedBarChart(studyData);
+    
+    // Heatmap - Student Distribution by Region
+    drawHeatMap(geoData);
+    
+    // Pie Chart - Full-time vs. Part-time Students
+    drawPieChart(educationData);
+    
+});
 
-<div class="chart-number">
-    <h2>Chart 2</h2>
-</div>
-<div class="description">
-    <h1>Student Enrollment by Sector and Field of Study</h1>
-    <p>Enrollment distribution across different sectors.</p>
-</div>
-<div class="chart-container" id="stackedBarChart"></div>
+// Function to draw Bar Chart for Gender Distribution
+function drawBarChart(data) {
+    const svg = d3.select("#bar-chart").append("svg").attr("width", 500).attr("height", 400);
+    const genders = ["F", "M"];
+    const values = genders.map(g => d3.sum(data, d => d[g]));
 
-<div class="chart-number">
-    <h2>Chart 3</h2>
-</div>
-<div class="description">
-    <h1>Student Distribution by Country</h1>
-    <p>Heatmap representation of student distribution in different countries.</p>
-</div>
-<div class="chart-container" id="heatmap"></div>
+    const x = d3.scaleBand().domain(genders).range([0, 400]).padding(0.2);
+    const y = d3.scaleLinear().domain([0, d3.max(values)]).range([300, 0]);
 
-<div class="chart-number">
-    <h2>Chart 4</h2>
-</div>
-<div class="description">
-    <h1>Student Distribution by Education Level</h1>
-    <p>Pie chart of student enrollment per education level.</p>
-</div>
-<div class="chart-container" id="pieChart"></div>
+    svg.selectAll("rect")
+        .data(values)
+        .enter()
+        .append("rect")
+        .attr("x", (d, i) => x(genders[i]))
+        .attr("y", d => y(d))
+        .attr("width", x.bandwidth())
+        .attr("height", d => 300 - y(d))
+        .attr("fill", "steelblue");
+}
 
-<div class="chart-number">
-    <h2>Chart 5</h2>
-</div>
-<div class="description">
-    <h1>Student Enrollment Trends Over Time</h1>
-    <p>Line chart showing enrollment trends.</p>
-</div>
-<div class="chart-container" id="lineChart"></div>
+// Function to draw Line Chart for Enrollment Trends
+function drawLineChart(data) {
+    const svg = d3.select("#line-chart").append("svg").attr("width", 600).attr("height", 400);
+    const x = d3.scaleTime().domain(d3.extent(data, d => d.TIME_PERIOD)).range([50, 550]);
+    const y = d3.scaleLinear().domain([0, d3.max(data, d => d.OBS_VALUE)]).range([350, 50]);
 
-<script>
-    // Sample data paths
-    const genderJsonFilePath = 'average_gender_course.json';
-    const sectorJsonFilePath = 'student_study_data1.json';
-    const educationJsonFilePath = 'distribution_by_education_mean.json';
-    const trendsJsonFilePath = 'student_enrollment_trends_latest_mean.json';
+    const line = d3.line()
+        .x(d => x(d.TIME_PERIOD))
+        .y(d => y(d.OBS_VALUE));
 
-    // Bar Chart: Student Enrollment by Gender
-    d3.json(genderJsonFilePath).then(data => {
-        const svg = d3.select("#barChart").append("svg").attr("width", 800).attr("height", 500);
-        const margin = { top: 40, right: 20, bottom: 50, left: 50 };
-        const width = 800 - margin.left - margin.right;
-        const height = 500 - margin.top - margin.bottom;
-        const chart = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-        
-        const x = d3.scaleBand().domain(data.map(d => d.isced11)).range([0, width]).padding(0.2);
-        const y = d3.scaleLinear().domain([0, d3.max(data, d => Math.max(d.F, d.M))]).nice().range([height, 0]);
-        
-        chart.selectAll(".bar-female")
-            .data(data)
-            .enter().append("rect")
-            .attr("class", "bar-female")
-            .attr("x", d => x(d.isced11))
-            .attr("y", d => y(d.F))
-            .attr("width", x.bandwidth() / 2)
-            .attr("height", d => height - y(d.F))
-            .attr("fill", "red");
-        
-        chart.selectAll(".bar-male")
-            .data(data)
-            .enter().append("rect")
-            .attr("class", "bar-male")
-            .attr("x", d => x(d.isced11) + x.bandwidth() / 2)
-            .attr("y", d => y(d.M))
-            .attr("width", x.bandwidth() / 2)
-            .attr("height", d => height - y(d.M))
-            .attr("fill", "blue");
-        
-        chart.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
-        chart.append("g").call(d3.axisLeft(y));
-    });
+    svg.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "blue")
+        .attr("stroke-width", 2)
+        .attr("d", line);
+}
 
-    // More D3.js visualizations for stacked bar chart, heatmap, pie chart, and line chart...
+// Function to draw Stacked Bar Chart
+function drawStackedBarChart(data) {
+    const svg = d3.select("#stacked-bar-chart").append("svg").attr("width", 600).attr("height", 400);
+    const categories = [...new Set(data.map(d => d['Field of Study']))];
+    const sectors = [...new Set(data.map(d => d['sector']))];
 
-</script>
-</body>
-</html>
+    const stack = d3.stack().keys(sectors)(data.map(d => {
+        let obj = { category: d['Field of Study'] };
+        sectors.forEach(s => obj[s] = d['sector'] === s ? d.OBS_VALUE : 0);
+        return obj;
+    }));
+
+    const x = d3.scaleBand().domain(categories).range([50, 550]).padding(0.2);
+    const y = d3.scaleLinear().domain([0, d3.max(data, d => d.OBS_VALUE)]).range([350, 50]);
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    svg.selectAll("g")
+        .data(stack)
+        .enter()
+        .append("g")
+        .attr("fill", (d, i) => color(i))
+        .selectAll("rect")
+        .data(d => d)
+        .enter()
+        .append("rect")
+        .attr("x", d => x(d.data.category))
+        .attr("y", d => y(d[1]))
+        .attr("height", d => y(d[0]) - y(d[1]))
+        .attr("width", x.bandwidth());
+}
+
+// Function to draw Heatmap
+function drawHeatMap(data) {
+    const svg = d3.select("#heatmap").append("svg").attr("width", 800).attr("height", 500);
+    const x = d3.scaleBand().domain(data.map(d => d.geo)).range([50, 750]).padding(0.1);
+    const y = d3.scaleLinear().domain([0, d3.max(data, d => d.OBS_VALUE)]).range([450, 50]);
+    
+    svg.selectAll("rect")
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("x", d => x(d.geo))
+        .attr("y", d => y(d.OBS_VALUE))
+        .attr("width", x.bandwidth())
+        .attr("height", d => 450 - y(d.OBS_VALUE))
+        .attr("fill", "red");
+}
+
+// Function to draw Pie Chart
+function drawPieChart(data) {
+    const svg = d3.select("#pie-chart").append("svg").attr("width", 400).attr("height", 400);
+    const radius = 150;
+    const pie = d3.pie().value(d => d.OBS_VALUE)(data);
+    const arc = d3.arc().innerRadius(0).outerRadius(radius);
+
+    const g = svg.append("g").attr("transform", "translate(200,200)");
+    g.selectAll("path")
+        .data(pie)
+        .enter()
+        .append("path")
+        .attr("d", arc)
+        .attr("fill", (d, i) => d3.schemeCategory10[i]);
+}
