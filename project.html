@@ -1,129 +1,265 @@
-// D3.js Visualizations for Higher Education Analysis
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Higher Education Analysis</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f8f9fa; }
+        .visualization { 
+            margin: 40px 0; padding: 25px;
+            background: white; border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .chart-title { 
+            font-size: 1.4em; color: #2c3e50;
+            margin-bottom: 20px; padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .axis path, .axis line { stroke: #666; }
+        .tooltip {
+            position: absolute; padding: 12px;
+            background: white; border: 1px solid #ddd;
+            border-radius: 4px; pointer-events: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Higher Education Student Analysis</h1>
 
-// Load the data from JSON files
-Promise.all([
-    d3.json('student_study_data1.json'),
-    d3.json('student_enrollment_trends_latest_mean.json'),
-    d3.json('student_distribution_geo_mean.json'),
-    d3.json('distribution_by_education_level_mean.json'),
-    d3.json('average_gender_course.json')
-]).then(([studyData, enrollmentData, geoData, educationData, genderData]) => {
-    
-    // Bar Chart - Gender Distribution
-    drawBarChart(genderData);
-    
-    // Line Chart - Enrollment Trends
-    drawLineChart(enrollmentData);
-    
-    // Stacked Bar Chart - Field of Study by Institution Type
-    drawStackedBarChart(studyData);
-    
-    // Heatmap - Student Distribution by Region
-    drawHeatMap(geoData);
-    
-    // Pie Chart - Full-time vs. Part-time Students
-    drawPieChart(educationData);
-    
-});
+    <!-- Gender Distribution -->
+    <div id="genderChart" class="visualization">
+        <div class="chart-title">Gender Distribution</div>
+    </div>
 
-// Function to draw Bar Chart for Gender Distribution
-function drawBarChart(data) {
-    const svg = d3.select("#bar-chart").append("svg").attr("width", 500).attr("height", 400);
-    const genders = ["F", "M"];
-    const values = genders.map(g => d3.sum(data, d => d[g]));
+    <!-- Enrollment Trends -->
+    <div id="enrollmentChart" class="visualization">
+        <div class="chart-title">Enrollment Trends</div>
+    </div>
 
-    const x = d3.scaleBand().domain(genders).range([0, 400]).padding(0.2);
-    const y = d3.scaleLinear().domain([0, d3.max(values)]).range([300, 0]);
+    <!-- Field of Study -->
+    <div id="fieldChart" class="visualization">
+        <div class="chart-title">Field of Study Distribution</div>
+    </div>
 
-    svg.selectAll("rect")
-        .data(values)
-        .enter()
-        .append("rect")
-        .attr("x", (d, i) => x(genders[i]))
-        .attr("y", d => y(d))
-        .attr("width", x.bandwidth())
-        .attr("height", d => 300 - y(d))
-        .attr("fill", "steelblue");
-}
+    <!-- Geographic Distribution -->
+    <div id="geoChart" class="visualization">
+        <div class="chart-title">Geographic Distribution</div>
+    </div>
 
-// Function to draw Line Chart for Enrollment Trends
-function drawLineChart(data) {
-    const svg = d3.select("#line-chart").append("svg").attr("width", 600).attr("height", 400);
-    const x = d3.scaleTime().domain(d3.extent(data, d => d.TIME_PERIOD)).range([50, 550]);
-    const y = d3.scaleLinear().domain([0, d3.max(data, d => d.OBS_VALUE)]).range([350, 50]);
+    <!-- Study Commitment -->
+    <div id="commitmentChart" class="visualization">
+        <div class="chart-title">Study Time Commitment</div>
+    </div>
 
-    const line = d3.line()
-        .x(d => x(d.TIME_PERIOD))
-        .y(d => y(d.OBS_VALUE));
+    <script>
+        // Configuration
+        const width = 1000, height = 500;
+        const margin = { top: 40, right: 40, bottom: 60, left: 70 };
+        const chartWidth = width - margin.left - margin.right;
+        const chartHeight = height - margin.top - margin.bottom;
+        const tooltip = d3.select("body").append("div").attr("class", "tooltip");
 
-    svg.append("path")
-        .datum(data)
-        .attr("fill", "none")
-        .attr("stroke", "blue")
-        .attr("stroke-width", 2)
-        .attr("d", line);
-}
+        // Load all data
+        Promise.all([
+            d3.json("average_gender_course.json"),
+            d3.json("student_enrollment_trends_latest_mean.json"),
+            d3.json("student_study_data1.json"),
+            d3.json("student_distribution_geo_mean.json"),
+            d3.json("distribution_by_education_level_mean.json"),
+            d3.json("https://raw.githubusercontent.com/leakyMirror/map-of-europe/master/GeoJSON/europe.geojson")
+        ]).then(([genderData, enrollmentData, studyData, geoData, levelData, europe]) => {
+            
+            // 1. Gender Distribution Chart
+            const genderSvg = d3.select("#genderChart")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
 
-// Function to draw Stacked Bar Chart
-function drawStackedBarChart(data) {
-    const svg = d3.select("#stacked-bar-chart").append("svg").attr("width", 600).attr("height", 400);
-    const categories = [...new Set(data.map(d => d['Field of Study']))];
-    const sectors = [...new Set(data.map(d => d['sector']))];
+            const mainGender = genderData.find(d => d.isced11 === "ED5-8");
+            const genderBars = [
+                { label: "Female", value: mainGender.F, color: "#e377c2" },
+                { label: "Male", value: mainGender.M, color: "#1f77b4" }
+            ];
 
-    const stack = d3.stack().keys(sectors)(data.map(d => {
-        let obj = { category: d['Field of Study'] };
-        sectors.forEach(s => obj[s] = d['sector'] === s ? d.OBS_VALUE : 0);
-        return obj;
-    }));
+            const xGender = d3.scaleBand()
+                .domain(genderBars.map(d => d.label))
+                .range([0, chartWidth])
+                .padding(0.3);
 
-    const x = d3.scaleBand().domain(categories).range([50, 550]).padding(0.2);
-    const y = d3.scaleLinear().domain([0, d3.max(data, d => d.OBS_VALUE)]).range([350, 50]);
-    const color = d3.scaleOrdinal(d3.schemeCategory10);
+            const yGender = d3.scaleLinear()
+                .domain([0, mainGender.T])
+                .range([chartHeight, 0]);
 
-    svg.selectAll("g")
-        .data(stack)
-        .enter()
-        .append("g")
-        .attr("fill", (d, i) => color(i))
-        .selectAll("rect")
-        .data(d => d)
-        .enter()
-        .append("rect")
-        .attr("x", d => x(d.data.category))
-        .attr("y", d => y(d[1]))
-        .attr("height", d => y(d[0]) - y(d[1]))
-        .attr("width", x.bandwidth());
-}
+            genderSvg.selectAll(".bar")
+                .data(genderBars)
+                .enter().append("rect")
+                .attr("x", d => xGender(d.label))
+                .attr("y", d => yGender(d.value))
+                .attr("width", xGender.bandwidth())
+                .attr("height", d => chartHeight - yGender(d.value))
+                .attr("fill", d => d.color)
+                .on("mouseover", (e, d) => {
+                    tooltip.style("opacity", 1)
+                        .html(`${d.label}<br>${d3.format(",")(d.value)}`)
+                        .style("left", (e.pageX + 15) + "px")
+                        .style("top", (e.pageY - 30) + "px");
+                })
+                .on("mouseout", () => tooltip.style("opacity", 0));
 
-// Function to draw Heatmap
-function drawHeatMap(data) {
-    const svg = d3.select("#heatmap").append("svg").attr("width", 800).attr("height", 500);
-    const x = d3.scaleBand().domain(data.map(d => d.geo)).range([50, 750]).padding(0.1);
-    const y = d3.scaleLinear().domain([0, d3.max(data, d => d.OBS_VALUE)]).range([450, 50]);
-    
-    svg.selectAll("rect")
-        .data(data)
-        .enter()
-        .append("rect")
-        .attr("x", d => x(d.geo))
-        .attr("y", d => y(d.OBS_VALUE))
-        .attr("width", x.bandwidth())
-        .attr("height", d => 450 - y(d.OBS_VALUE))
-        .attr("fill", "red");
-}
+            // 2. Enrollment Trends
+            const enrollmentSvg = d3.select("#enrollmentChart")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
 
-// Function to draw Pie Chart
-function drawPieChart(data) {
-    const svg = d3.select("#pie-chart").append("svg").attr("width", 400).attr("height", 400);
-    const radius = 150;
-    const pie = d3.pie().value(d => d.OBS_VALUE)(data);
-    const arc = d3.arc().innerRadius(0).outerRadius(radius);
+            const parseTime = d3.timeParse("%Y");
+            const levels = ["Bachelor's Level", "Master's Level", "Doctoral Level"];
+            const colorScale = d3.scaleOrdinal()
+                .domain(levels)
+                .range(d3.schemeTableau10);
 
-    const g = svg.append("g").attr("transform", "translate(200,200)");
-    g.selectAll("path")
-        .data(pie)
-        .enter()
-        .append("path")
-        .attr("d", arc)
-        .attr("fill", (d, i) => d3.schemeCategory10[i]);
-}
+            const lineData = levels.map(level => ({
+                level,
+                values: enrollmentData.filter(d => d["Education Level"] === level)
+                    .sort((a, b) => a.TIME_PERIOD - b.TIME_PERIOD)
+                    .map(d => ({
+                        year: parseTime(d.TIME_PERIOD),
+                        value: d.OBS_VALUE
+                    }))
+            }));
+
+            const xEnroll = d3.scaleTime()
+                .domain(d3.extent(enrollmentData, d => parseTime(d.TIME_PERIOD)))
+                .range([0, chartWidth]);
+
+            const yEnroll = d3.scaleLinear()
+                .domain([0, d3.max(enrollmentData, d => d.OBS_VALUE)])
+                .range([chartHeight, 0]);
+
+            enrollmentSvg.selectAll(".line")
+                .data(lineData)
+                .enter().append("path")
+                .attr("d", d3.line()
+                    .x(d => xEnroll(d.year))
+                    .y(d => yEnroll(d.value))
+                )
+                .attr("stroke", d => colorScale(d.level))
+                .attr("fill", "none")
+                .attr("stroke-width", 2);
+
+            // 3. Field of Study by Sector
+            const fieldSvg = d3.select("#fieldChart")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const sectors = ["PUBL", "PRIV"];
+            const fields = [...new Set(studyData.map(d => d["Field of Study"]))];
+            
+            const stackData = sectors.map(sector => ({
+                sector,
+                ...Object.fromEntries(fields.map(field => [
+                    field, 
+                    studyData.find(d => d.sector === sector && d["Field of Study"] === field)?.OBS_VALUE || 0
+                ]))
+            }));
+
+            const stack = d3.stack().keys(fields);
+            const stackedData = stack(stackData);
+
+            const xField = d3.scaleBand()
+                .domain(sectors)
+                .range([0, chartWidth])
+                .padding(0.2);
+
+            const yField = d3.scaleLinear()
+                .domain([0, d3.max(stackedData, d => d3.max(d, d => d[1]))])
+                .range([chartHeight, 0]);
+
+            fieldSvg.selectAll(".field")
+                .data(stackedData)
+                .enter().append("g")
+                .attr("fill", (d, i) => d3.schemeTableau10[i])
+                .selectAll("rect")
+                .data(d => d)
+                .enter().append("rect")
+                .attr("x", d => xField(d.data.sector))
+                .attr("y", d => yField(d[1]))
+                .attr("height", d => yField(d[0]) - yField(d[1]))
+                .attr("width", xField.bandwidth());
+
+            // 4. Geographic Distribution
+            const geoSvg = d3.select("#geoChart")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", 600);
+
+            const projection = d3.geoMercator()
+                .fitSize([width, 600], europe);
+
+            const path = d3.geoPath().projection(projection);
+            const colorGeo = d3.scaleSequential(d3.interpolateBlues)
+                .domain([0, d3.max(geoData, d => d.OBS_VALUE)]);
+
+            geoSvg.selectAll("path")
+                .data(europe.features)
+                .enter().append("path")
+                .attr("d", path)
+                .attr("fill", d => {
+                    const country = geoData.find(g => g.geo === d.properties.iso_a2);
+                    return country ? colorGeo(country.OBS_VALUE) : "#eee";
+                })
+                .on("mouseover", (e, d) => {
+                    const country = geoData.find(g => g.geo === d.properties.iso_a2);
+                    if (country) {
+                        tooltip.style("opacity", 1)
+                            .html(`${d.properties.name}<br>${d3.format(",")(country.OBS_VALUE)}`)
+                            .style("left", (e.pageX + 15) + "px")
+                            .style("top", (e.pageY - 30) + "px");
+                    }
+                })
+                .on("mouseout", () => tooltip.style("opacity", 0));
+
+            // 5. Study Commitment
+            const commitSvg = d3.select("#commitmentChart")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${width/2},${height/2})`);
+
+            const pieData = [
+                { label: "Full-Time", value: levelData.find(d => d["Education Level"] === "Tertiary Education").OBS_VALUE },
+                { label: "Part-Time", value: levelData.find(d => d["Education Level"] === "Other Tertiary Education").OBS_VALUE }
+            ];
+
+            const pie = d3.pie().value(d => d.value);
+            const arc = d3.arc().innerRadius(0).outerRadius(150);
+
+            commitSvg.selectAll("path")
+                .data(pie(pieData))
+                .enter().append("path")
+                .attr("d", arc)
+                .attr("fill", (d, i) => d3.schemeTableau10[i])
+                .on("mouseover", (e, d) => {
+                    tooltip.style("opacity", 1)
+                        .html(`${d.data.label}<br>${d3.format(",")(d.data.value)}`)
+                        .style("left", (e.pageX + 15) + "px")
+                        .style("top", (e.pageY - 30) + "px");
+                })
+                .on("mouseout", () => tooltip.style("opacity", 0));
+
+        }).catch(error => console.error("Error:", error));
+    </script>
+</body>
+</html>
