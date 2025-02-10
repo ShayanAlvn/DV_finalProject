@@ -1,265 +1,578 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Higher Education Analysis</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://unpkg.com/topojson@3"></script>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background: #f8f9fa; }
-        .visualization { 
-            margin: 40px 0; padding: 25px;
-            background: white; border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-        .chart-title { 
-            font-size: 1.4em; color: #2c3e50;
-            margin-bottom: 20px; padding-bottom: 10px;
-            border-bottom: 2px solid #eee;
-        }
-        .axis path, .axis line { stroke: #666; }
-        .tooltip {
-            position: absolute; padding: 12px;
-            background: white; border: 1px solid #ddd;
-            border-radius: 4px; pointer-events: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Higher Education Analysis</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson@3"></script>
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #3498db;
+      --accent-color: #e74c3c;
+    }
+
+    body { 
+      font-family: 'Segoe UI', sans-serif; 
+      margin: 40px; 
+      background: #f8f9fa;
+    }
+    
+    .dashboard-title {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 3px solid var(--secondary-color);
+    }
+
+    .visualization { 
+      margin: 40px 0; 
+      padding: 30px;
+      background: white; 
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .chart-title { 
+      font-size: 1.6em; 
+      color: var(--primary-color);
+      margin-bottom: 25px; 
+      padding-bottom: 15px;
+      border-bottom: 2px solid #eee;
+    }
+
+    .tooltip {
+      position: absolute;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid var(--secondary-color);
+      border-radius: 8px;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-size: 14px;
+      backdrop-filter: blur(3px);
+    }
+
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5em;
+      z-index: 1000;
+    }
+
+    .legend {
+      padding: 10px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 8px;
+      position: absolute;
+      right: 30px;
+      top: 80px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 5px 0;
+    }
+
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+    }
+
+    .axis path,
+    .axis line {
+      stroke: #666;
+    }
+    .axis text {
+      font-size: 12px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Higher Education Student Analysis</h1>
+  <div class="loading-screen">Loading Visualizations...</div>
+  
+  <h1 class="dashboard-title">Higher Education Student Analysis</h1>
 
-    <!-- Gender Distribution -->
-    <div id="genderChart" class="visualization">
-        <div class="chart-title">Gender Distribution</div>
+  <!-- Visualization Containers -->
+  <div class="chart-number">
+    <h2>Chart 1</h2>
+  </div>
+  <div class="description">
+    <h1>Student Enrollment by Gender</h1>
+    <p>This bar chart illustrates the number of female and male students enrolled in various courses. </p>
+  </div>
+  <div class="chart-description">
+    <p>This bar chart presents a comparison of student enrollment by gender across various courses, it is a simple quick comparison that shows the number of female and male, the viewer can easily estimates the ratio of these two categories by a quick look.</p>
+  </div>
+  <div id="genderChart" class="visualization">
+    <div class="chart-title">Gender Distribution in Higher Education</div>
+  </div>
+  <div class="chart-container">
+      <canvas id="groupedBarChart"></canvas>
+  </div>
+
+
+
+
+  <div class="chart-number">
+    <h2>Chart 2</h2>
+  </div>
+
+  <div class="description">
+    <h1>Student Enrollment Trends Over Time</h1>
+    <p>This line chart illustrates the trends in student enrollment over the years for different education levels. It provides insights into the changes in enrollment numbers over time.</p>
+</div>
+
+<div class="chart-container">
+    <div id="line-chart-container"></div>
+</div>
+
+<div class="chart-description">
+    <p>The line chart depicts the trends in student enrollment at various education levels from 2013 to 2021. A noticeable trend is the significant decline in enrollment at the Bachelor's level over the years, with a sharp drop after 2018. In contrast, other education levels, such as Master's, Doctoral, and Other Tertiary Education, show relatively stable enrollment counts throughout the same period. The enrollment in specific fields at the Bachelor's and Doctoral levels appears to be consistent with no major fluctuations. This chart provides a clear visualization of how student enrollment trends have changed over the years, indicating shifts in education preferences or availability.</p>    
+</div>
+
+  <div id="enrollmentChart" class="visualization">
+    <div class="chart-title">Enrollment Trends Over Time</div>
+  </div>
+
+
+
+
+
+
+
+  <div class="chart-number">
+    <h2>Chart 3</h2>
+</div>
+
+<div class="description">
+    <h1>Student Distribution by Education Level</h1>
+    <p>This Stacked bar chart shows the distribution of students based on their education level on Private and Public schools.</p>
+</div>
+<div class="chart-description">
+    <p>The Stacked bar chart illustrates the distribution of students across different education levels. The largest segment is dedicated to Tertiary Education
+      Level education, which dominates the chart, indicating that the majority of students are enrolled at this level. Other sections represent Master's Level, Doctoral Level, and their respective specific fields, as well as categories for Other Tertiary Education and general Tertiary Education. The Doctoral Level, for instance, accounts for a smaller proportion of the total. The color-coding allows for easy differentiation between the levels of education and highlights the relative size of student populations at each level.</p>
+</div>
+  <div id="fieldChart" class="visualization">
+    <div class="chart-title">Field of Study Distribution</div>
+  </div>
+
+
+
+
+  <div class="chart-number">
+    <h2>Chart 4</h2>
+</div>
+
+<div class="description">
+    <h1>Student Distribution by Country</h1>
+    <p>This heatmap illustrates the distribution of students across different countries. Each cell represents the number of students in a specific country. The color intensity indicates the student count, with darker colors representing higher enrollment.</p>
+</div>
+<div class="chart-description">
+    <p>This heatmap provides a visual representation of student distribution by country in Europe. Each cell on the map corresponds to a country, with the color intensity reflecting the number of students: darker shades indicate higher student enrollment. The gradient scale on the right side of the map transitions from green to red, with red representing countries with a student population of 1 million or more, and green representing areas with no students. From the map, we can observe that one country, in particular, has a very high student population, shown by the dark green shading, suggesting it is a major hub for education in Europe.</p>
     </div>
+  <div id="geoChart" class="visualization">
+    <div class="chart-title">Geographic Distribution of Students</div>
+  </div>
 
-    <!-- Enrollment Trends -->
-    <div id="enrollmentChart" class="visualization">
-        <div class="chart-title">Enrollment Trends</div>
-    </div>
 
-    <!-- Field of Study -->
-    <div id="fieldChart" class="visualization">
-        <div class="chart-title">Field of Study Distribution</div>
-    </div>
 
-    <!-- Geographic Distribution -->
-    <div id="geoChart" class="visualization">
-        <div class="chart-title">Geographic Distribution</div>
-    </div>
 
-    <!-- Study Commitment -->
-    <div id="commitmentChart" class="visualization">
-        <div class="chart-title">Study Time Commitment</div>
-    </div>
 
-    <script>
-        // Configuration
-        const width = 1000, height = 500;
-        const margin = { top: 40, right: 40, bottom: 60, left: 70 };
-        const chartWidth = width - margin.left - margin.right;
-        const chartHeight = height - margin.top - margin.bottom;
-        const tooltip = d3.select("body").append("div").attr("class", "tooltip");
+  <div class="chart-number">
+    <h2>Chart 5</h2>
+</div>
 
-        // Load all data
-        Promise.all([
-            d3.json("average_gender_course.json"),
-            d3.json("student_enrollment_trends_latest_mean.json"),
-            d3.json("student_study_data1.json"),
-            d3.json("student_distribution_geo_mean.json"),
-            d3.json("distribution_by_education_level_mean.json"),
-            d3.json("https://raw.githubusercontent.com/leakyMirror/map-of-europe/master/GeoJSON/europe.geojson")
-        ]).then(([genderData, enrollmentData, studyData, geoData, levelData, europe]) => {
-            
-            // 1. Gender Distribution Chart
-            const genderSvg = d3.select("#genderChart")
-                .append("svg")
-                .attr("width", width)
-                .attr("height", height)
-                .append("g")
-                .attr("transform", `translate(${margin.left},${margin.top})`);
+<div class="description">
+    <h1>Student Distribution by Country</h1>
+    <p>This Pie chart illustrates the amount of students across different countries and genders about their part-time or full-time status. </p>
+</div>
+  <div id="commitmentChart" class="visualization">
+    <div class="chart-title">Study Time Commitment Distribution</div>
+  </div>
 
-            const mainGender = genderData.find(d => d.isced11 === "ED5-8");
-            const genderBars = [
-                { label: "Female", value: mainGender.F, color: "#e377c2" },
-                { label: "Male", value: mainGender.M, color: "#1f77b4" }
-            ];
+  <script>
+    // Configuration
+    const width = 1200, height = 600;
+    const margin = { top: 60, right: 60, bottom: 80, left: 80 };
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
 
-            const xGender = d3.scaleBand()
-                .domain(genderBars.map(d => d.label))
-                .range([0, chartWidth])
-                .padding(0.3);
+    // Load data and render visualizations
+    Promise.all([
+      d3.json("average_gender_course.json"),
+      d3.json("student_enrollment_trends_latest_mean.json"),
+      d3.json("student_study_data1.json"),
+      d3.json("distribution_by_education_level_mean.json"),
+      d3.json("https://raw.githubusercontent.com/leakyMirror/map-of-europe/master/GeoJSON/europe.geojson"),
+      d3.json("student_distribution_geo_mean.json")
+    ]).then(([genderData, enrollmentData, studyData, levelData, europe, geoData]) => {
+      const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
 
-            const yGender = d3.scaleLinear()
-                .domain([0, mainGender.T])
-                .range([chartHeight, 0]);
+      // 1. Gender Distribution Chart
+      const genderSvg = d3.select("#genderChart")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
 
-            genderSvg.selectAll(".bar")
-                .data(genderBars)
-                .enter().append("rect")
-                .attr("x", d => xGender(d.label))
-                .attr("y", d => yGender(d.value))
-                .attr("width", xGender.bandwidth())
-                .attr("height", d => chartHeight - yGender(d.value))
-                .attr("fill", d => d.color)
-                .on("mouseover", (e, d) => {
-                    tooltip.style("opacity", 1)
-                        .html(`${d.label}<br>${d3.format(",")(d.value)}`)
-                        .style("left", (e.pageX + 15) + "px")
-                        .style("top", (e.pageY - 30) + "px");
-                })
-                .on("mouseout", () => tooltip.style("opacity", 0));
+      const mainGender = genderData.find(d => d.isced11 === "ED5-8");
+      const genderBars = [
+        { label: "Female", value: Math.round(mainGender.F), color: "#e377c2" },
+        { label: "Male", value: Math.round(mainGender.M), color: "#1f77b4" }
+      ];
 
-            // 2. Enrollment Trends
-            const enrollmentSvg = d3.select("#enrollmentChart")
-                .append("svg")
-                .attr("width", width)
-                .attr("height", height)
-                .append("g")
-                .attr("transform", `translate(${margin.left},${margin.top})`);
+      const xGender = d3.scaleBand()
+        .domain(genderBars.map(d => d.label))
+        .range([0, chartWidth])
+        .padding(0.3);
 
-            const parseTime = d3.timeParse("%Y");
-            const levels = ["Bachelor's Level", "Master's Level", "Doctoral Level"];
-            const colorScale = d3.scaleOrdinal()
-                .domain(levels)
-                .range(d3.schemeTableau10);
+      const yGender = d3.scaleLinear()
+        .domain([0, Math.round(mainGender.T)])
+        .range([chartHeight, 0]);
 
-            const lineData = levels.map(level => ({
-                level,
-                values: enrollmentData.filter(d => d["Education Level"] === level)
-                    .sort((a, b) => a.TIME_PERIOD - b.TIME_PERIOD)
-                    .map(d => ({
-                        year: parseTime(d.TIME_PERIOD),
-                        value: d.OBS_VALUE
-                    }))
-            }));
+      genderSvg.selectAll(".bar")
+        .data(genderBars)
+        .enter().append("rect")
+        .attr("x", d => xGender(d.label))
+        .attr("y", d => yGender(d.value))
+        .attr("width", xGender.bandwidth())
+        .attr("height", d => chartHeight - yGender(d.value))
+        .attr("fill", d => d.color)
+        .on("mouseover", (e, d) => {
+          tooltip.style("opacity", 1)
+            .html(`${d.label}: ${d3.format(",")(Math.round(d.value))}`)
+            .style("left", (e.pageX + 15) + "px")
+            .style("top", (e.pageY - 30) + "px");
+        })
+        .on("mouseout", () => tooltip.style("opacity", 0));
 
-            const xEnroll = d3.scaleTime()
-                .domain(d3.extent(enrollmentData, d => parseTime(d.TIME_PERIOD)))
-                .range([0, chartWidth]);
+      genderSvg.append("g")
+        .attr("transform", `translate(0,${chartHeight})`)
+        .call(d3.axisBottom(xGender));
 
-            const yEnroll = d3.scaleLinear()
-                .domain([0, d3.max(enrollmentData, d => d.OBS_VALUE)])
-                .range([chartHeight, 0]);
+      genderSvg.append("g")
+        .call(d3.axisLeft(yGender).ticks(5).tickFormat(d3.format(".2s")));
 
-            enrollmentSvg.selectAll(".line")
-                .data(lineData)
-                .enter().append("path")
-                .attr("d", d3.line()
-                    .x(d => xEnroll(d.year))
-                    .y(d => yEnroll(d.value))
-                )
-                .attr("stroke", d => colorScale(d.level))
-                .attr("fill", "none")
-                .attr("stroke-width", 2);
 
-            // 3. Field of Study by Sector
-            const fieldSvg = d3.select("#fieldChart")
-                .append("svg")
-                .attr("width", width)
-                .attr("height", height)
-                .append("g")
-                .attr("transform", `translate(${margin.left},${margin.top})`);
+      // 2. Enrollment Trends: Stacked Area Chart with Legend
+      // Assumption: enrollmentData contains fields:
+      //   TIME_PERIOD (e.g., "2010"),
+      //   OBS_VALUE (number of students),
+      //   Education Level (e.g., "Bachelor's Level", "Master's Level", "Doctoral Level")
+      const enrollmentSvg = d3.select("#enrollmentChart")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
 
-            const sectors = ["PUBL", "PRIV"];
-            const fields = [...new Set(studyData.map(d => d["Field of Study"]))];
-            
-            const stackData = sectors.map(sector => ({
-                sector,
-                ...Object.fromEntries(fields.map(field => [
-                    field, 
-                    studyData.find(d => d.sector === sector && d["Field of Study"] === field)?.OBS_VALUE || 0
-                ]))
-            }));
+      const enrollmentG = enrollmentSvg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
 
-            const stack = d3.stack().keys(fields);
-            const stackedData = stack(stackData);
+      // Clean and normalize the enrollment data:
+      const enrollmentDataClean = enrollmentData
+        .filter(d => d.TIME_PERIOD && d.OBS_VALUE && d["Education Level"])
+        .map(d => {
+          // Convert TIME_PERIOD to a Date (January 1st of that year)
+          let yearDate = new Date(+d.TIME_PERIOD, 0, 1);
+          // Normalize the education level
+          let lvl = d["Education Level"].replace(/ -.*/, "").trim();
+          if (lvl.toLowerCase().includes("bachelor")) {
+            lvl = "Bachelor's";
+          } else if (lvl.toLowerCase().includes("master")) {
+            lvl = "Master's";
+          } else if (lvl.toLowerCase().includes("doctor")) {
+            lvl = "PhD";
+          }
+          return {
+            year: yearDate,
+            value: +d.OBS_VALUE,
+            level: lvl
+          };
+        });
 
-            const xField = d3.scaleBand()
-                .domain(sectors)
-                .range([0, chartWidth])
-                .padding(0.2);
+      // Define the order of levels:
+      const levelsOrder = ["Bachelor's", "Master's", "PhD"];
 
-            const yField = d3.scaleLinear()
-                .domain([0, d3.max(stackedData, d => d3.max(d, d => d[1]))])
-                .range([chartHeight, 0]);
+      // Group the data by year so that each entry includes values for each level.
+      // First, nest the data by year:
+      const nested = d3.group(enrollmentDataClean, d => d.year);
+      // For each year, create an object with keys for each level:
+      const stackedDataArray = Array.from(nested, ([year, values]) => {
+        let obj = { year: new Date(year) };
+        levelsOrder.forEach(level => {
+          // Sum values for each level (if there are multiple entries)
+          obj[level] = d3.sum(values.filter(d => d.level === level), d => d.value);
+        });
+        return obj;
+      }).sort((a, b) => a.year - b.year);
 
-            fieldSvg.selectAll(".field")
-                .data(stackedData)
-                .enter().append("g")
-                .attr("fill", (d, i) => d3.schemeTableau10[i])
-                .selectAll("rect")
-                .data(d => d)
-                .enter().append("rect")
-                .attr("x", d => xField(d.data.sector))
-                .attr("y", d => yField(d[1]))
-                .attr("height", d => yField(d[0]) - yField(d[1]))
-                .attr("width", xField.bandwidth());
+      // Create a stack layout for the area chart
+      const stackGen = d3.stack()
+        .keys(levelsOrder)
+        .order(d3.stackOrderNone)
+        .offset(d3.stackOffsetNone);
 
-            // 4. Geographic Distribution
-            const geoSvg = d3.select("#geoChart")
-                .append("svg")
-                .attr("width", width)
-                .attr("height", 600);
+      const series = stackGen(stackedDataArray);
 
-            const projection = d3.geoMercator()
-                .fitSize([width, 600], europe);
+      // Create scales
+      const xEnroll = d3.scaleTime()
+        .domain(d3.extent(stackedDataArray, d => d.year))
+        .range([0, chartWidth]);
 
-            const path = d3.geoPath().projection(projection);
-            const colorGeo = d3.scaleSequential(d3.interpolateBlues)
-                .domain([0, d3.max(geoData, d => d.OBS_VALUE)]);
+      const yEnroll = d3.scaleLinear()
+        .domain([0, d3.max(stackedDataArray, d => {
+          let total = 0;
+          levelsOrder.forEach(lvl => total += d[lvl]);
+          return total;
+        })])
+        .nice()
+        .range([chartHeight, 0]);
 
-            geoSvg.selectAll("path")
-                .data(europe.features)
-                .enter().append("path")
-                .attr("d", path)
-                .attr("fill", d => {
-                    const country = geoData.find(g => g.geo === d.properties.iso_a2);
-                    return country ? colorGeo(country.OBS_VALUE) : "#eee";
-                })
-                .on("mouseover", (e, d) => {
-                    const country = geoData.find(g => g.geo === d.properties.iso_a2);
-                    if (country) {
-                        tooltip.style("opacity", 1)
-                            .html(`${d.properties.name}<br>${d3.format(",")(country.OBS_VALUE)}`)
-                            .style("left", (e.pageX + 15) + "px")
-                            .style("top", (e.pageY - 30) + "px");
-                    }
-                })
-                .on("mouseout", () => tooltip.style("opacity", 0));
+      // Define an area generator
+      const areaGen = d3.area()
+        .x(d => xEnroll(d.data.year))
+        .y0(d => yEnroll(d[0]))
+        .y1(d => yEnroll(d[1]));
 
-            // 5. Study Commitment
-            const commitSvg = d3.select("#commitmentChart")
-                .append("svg")
-                .attr("width", width)
-                .attr("height", height)
-                .append("g")
-                .attr("transform", `translate(${width/2},${height/2})`);
+      // Draw the areas for each series (study level)
+      enrollmentG.selectAll(".area")
+        .data(series)
+        .enter().append("path")
+        .attr("class", "area")
+        .attr("d", areaGen)
+        .attr("fill", (d, i) => d3.schemeTableau10[i])
+        .attr("stroke", "none")
+        .attr("opacity", 0.8);
 
-            const pieData = [
-                { label: "Full-Time", value: levelData.find(d => d["Education Level"] === "Tertiary Education").OBS_VALUE },
-                { label: "Part-Time", value: levelData.find(d => d["Education Level"] === "Other Tertiary Education").OBS_VALUE }
-            ];
+      // Add axes to the stacked area chart
+      enrollmentG.append("g")
+        .attr("transform", `translate(0,${chartHeight})`)
+        .call(d3.axisBottom(xEnroll).tickFormat(d3.timeFormat("%Y")));
 
-            const pie = d3.pie().value(d => d.value);
-            const arc = d3.arc().innerRadius(0).outerRadius(150);
+      enrollmentG.append("g")
+        .call(d3.axisLeft(yEnroll));
 
-            commitSvg.selectAll("path")
-                .data(pie(pieData))
-                .enter().append("path")
-                .attr("d", arc)
-                .attr("fill", (d, i) => d3.schemeTableau10[i])
-                .on("mouseover", (e, d) => {
-                    tooltip.style("opacity", 1)
-                        .html(`${d.data.label}<br>${d3.format(",")(d.data.value)}`)
-                        .style("left", (e.pageX + 15) + "px")
-                        .style("top", (e.pageY - 30) + "px");
-                })
-                .on("mouseout", () => tooltip.style("opacity", 0));
+      // Add a legend for the study levels
+      const legend = enrollmentSvg.append("g")
+        .attr("class", "legend")
+        .attr("transform", `translate(${width - margin.right - 150},${margin.top})`);
 
-        }).catch(error => console.error("Error:", error));
-    </script>
+      levelsOrder.forEach((level, i) => {
+        const legendRow = legend.append("g")
+          .attr("transform", `translate(0, ${i * 20})`);
+
+        legendRow.append("rect")
+          .attr("width", 18)
+          .attr("height", 18)
+          .attr("fill", d3.schemeTableau10[i]);
+
+        legendRow.append("text")
+          .attr("x", 24)
+          .attr("y", 14)
+          .text(level);
+      });
+
+      // 3. Field of Study Chart with Legend
+      const fieldSvg = d3.select("#fieldChart")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const sectors = ["PUBL", "PRIV"];
+      const fields = [...new Set(studyData.map(d => d["Field of Study"]))];
+      const fieldColor = d3.scaleOrdinal(d3.schemeTableau10).domain(fields);
+
+      const stackData = sectors.map(sector => ({
+        sector,
+        ...Object.fromEntries(fields.map(field => [
+          field, 
+          studyData.find(d => d.sector === sector && d["Field of Study"] === field)?.OBS_VALUE || 0
+        ]))
+      }));
+
+      const stack = d3.stack().keys(fields);
+      const stackedData = stack(stackData);
+
+      const xField = d3.scaleBand()
+        .domain(sectors)
+        .range([0, chartWidth])
+        .padding(0.2);
+
+      const yField = d3.scaleLinear()
+        .domain([0, d3.max(stackedData, d => d3.max(d, d => d[1]))])
+        .range([chartHeight, 0]);
+
+      fieldSvg.selectAll(".field")
+        .data(stackedData)
+        .enter().append("g")
+        .attr("fill", d => fieldColor(d.key))
+        .selectAll("rect")
+        .data(d => d)
+        .enter().append("rect")
+        .attr("x", d => xField(d.data.sector))
+        .attr("y", d => yField(d[1]))
+        .attr("height", d => yField(d[0]) - yField(d[1]))
+        .attr("width", xField.bandwidth())
+        .on("mouseover", (e, d) => {
+          tooltip.style("opacity", 1)
+            .html(`${d.data.sector} - ${d.key}<br>${d3.format(",")(d[1] - d[0])}`)
+            .style("left", (e.pageX + 15) + "px")
+            .style("top", (e.pageY - 30) + "px");
+        })
+        .on("mouseout", () => tooltip.style("opacity", 0));
+
+      // Field of Study Legend
+      const fieldLegend = d3.select("#fieldChart")
+        .append("div")
+        .attr("class", "legend");
+
+      fields.forEach(field => {
+        fieldLegend.append("div")
+          .attr("class", "legend-item")
+          .html(`
+            <div class="legend-color" style="background:${fieldColor(field)}"></div>
+            <div>${field}</div>
+          `);
+      });
+
+      fieldSvg.append("g")
+        .attr("transform", `translate(0,${chartHeight})`)
+        .call(d3.axisBottom(xField));
+
+      fieldSvg.append("g")
+        .call(d3.axisLeft(yField).ticks(5).tickFormat(d3.format(".2s")));
+
+      // 4. Enhanced Geographic Distribution
+      const geoSvg = d3.select("#geoChart")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height + 100);
+
+      const projection = d3.geoMercator()
+        .fitSize([width, height], europe);
+
+      const path = d3.geoPath().projection(projection);
+      const countryMap = Object.fromEntries(geoData.map(d => [d.geo, +d.OBS_VALUE]));
+      const maxStudents = d3.max(geoData, d => d.OBS_VALUE);
+      const colorScale = d3.scaleSequential(d3.interpolateBlues).domain([0, maxStudents]);
+
+      geoSvg.selectAll("path")
+        .data(europe.features)
+        .enter().append("path")
+        .attr("d", path)
+        .attr("fill", d => {
+          let code = d.properties.ISO2 || d.properties.id;
+          code = code === "GR" ? "EL" : code === "GB" ? "UK" : code;
+          return colorScale(countryMap[code] || 0);
+        })
+        .attr("stroke", "#fff")
+        .on("mouseover", (e, d) => {
+          let code = d.properties.ISO2 || d.properties.id;
+          code = code === "GR" ? "EL" : code === "GB" ? "UK" : code;
+          const value = countryMap[code] ? 
+            d3.format(",d")(Math.round(countryMap[code])) : 
+            "No data available";
+          const countryName = d.properties.name || "Unknown Country";
+          
+          d3.select(e.target)
+            .attr("stroke", "#000")
+            .attr("stroke-width", 1.5);
+
+          tooltip.style("opacity", 1)
+            .html(`${countryName}<br>Students: ${value}`)
+            .style("left", (e.pageX + 15) + "px")
+            .style("top", (e.pageY - 30) + "px");
+        })
+        .on("mouseout", function() {
+          d3.select(this)
+            .attr("stroke", "#fff")
+            .attr("stroke-width", 0.5);
+          tooltip.style("opacity", 0);
+        });
+
+      // 5. Study Commitment Chart with Legend
+      const commitSvg = d3.select("#commitmentChart")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", `translate(${width/2},${height/2})`);
+
+      const pieData = [
+        { label: "Full-Time", value: levelData.find(d => d["Education Level"] === "Tertiary Education").OBS_VALUE },
+        { label: "Part-Time", value: levelData.find(d => d["Education Level"] === "Other Tertiary Education").OBS_VALUE }
+      ];
+
+      const pie = d3.pie().value(d => d.value);
+      const arc = d3.arc().innerRadius(100).outerRadius(180);
+
+      commitSvg.selectAll("path")
+        .data(pie(pieData))
+        .enter().append("path")
+        .attr("d", arc)
+        .attr("fill", (d, i) => d3.schemeTableau10[i])
+        .on("mouseover", (e, d) => {
+          tooltip.style("opacity", 1)
+            .html(`${d.data.label}<br>${d3.format(",")(d.data.value)}`)
+            .style("left", (e.pageX + 15) + "px")
+            .style("top", (e.pageY - 30) + "px");
+        })
+        .on("mouseout", () => tooltip.style("opacity", 0));
+
+      // Study Commitment Legend
+      const commitLegend = d3.select("#commitmentChart")
+        .append("div")
+        .attr("class", "legend");
+
+      pieData.forEach((d, i) => {
+        commitLegend.append("div")
+          .attr("class", "legend-item")
+          .html(`
+            <div class="legend-color" style="background:${d3.schemeTableau10[i]}"></div>
+            <div>${d.label}</div>
+          `);
+      });
+
+      commitSvg.selectAll("text")
+        .data(pie(pieData))
+        .enter().append("text")
+        .attr("transform", d => `translate(${arc.centroid(d)})`)
+        .attr("text-anchor", "middle")
+        .text(d => `${((d.endAngle - d.startAngle) / (2 * Math.PI) * 100).toFixed(1)}%`)
+        .style("fill", "#fff")
+       
+      commitSvg.selectAll("text")
+        .data(pie(pieData))
+        .enter().append("text")
+        .attr("transform", d => `translate(${arc.centroid(d)})`)
+        .attr("text-anchor", "middle")
+        .text(d => `${((d.endAngle - d.startAngle) / (2 * Math.PI) * 100).toFixed(1)}%`)
+        .style("fill", "#fff")
+        .style("font-size", "14px");
+
+    }).catch(error => {
+      console.error("Error loading data:", error);
+      alert("Error loading data. Please check console for details.");
+    }).finally(() => {
+      d3.select(".loading-screen").style("display", "none");
+    });
+  </script>
 </body>
 </html>
